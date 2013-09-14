@@ -272,9 +272,8 @@ killpg(pid_t pgrp, int sig);
 void
 getdate(char *string);
     INIT:
-        struct tm *tm;
+        struct tm *tm = getdate(string);
     PPCODE:
-        tm = getdate(string);
         if (tm != NULL) {
             EXTEND(SP, 9);
             PUSHs(sv_2mortal(newSViv(tm->tm_sec)));
@@ -286,6 +285,43 @@ getdate(char *string);
             PUSHs(sv_2mortal(newSViv(tm->tm_wday)));
             PUSHs(sv_2mortal(newSViv(tm->tm_yday)));
             PUSHs(sv_2mortal(newSViv(tm->tm_isdst)));
+        }
+
+void
+strptime(char *s, char *format, SV *sec = &PL_sv_undef, SV *min = &PL_sv_undef, SV *hour = &PL_sv_undef, SV *mday = &PL_sv_undef, SV *mon = &PL_sv_undef, SV *year = &PL_sv_undef, SV *wday = &PL_sv_undef, SV *yday = &PL_sv_undef, SV *isdst = &PL_sv_undef);
+    INIT:
+        char *remainder;
+        struct tm tm;
+    PPCODE:
+        tm.tm_sec = sec == &PL_sv_undef ? INT_MIN : SvIV(sec);
+        tm.tm_min = min == &PL_sv_undef ? INT_MIN : SvIV(min);
+        tm.tm_hour = hour == &PL_sv_undef ? INT_MIN : SvIV(hour);
+        tm.tm_mday = mday == &PL_sv_undef ? INT_MIN : SvIV(mday);
+        tm.tm_mon = mon == &PL_sv_undef ? INT_MIN : SvIV(mon);
+        tm.tm_year = year == &PL_sv_undef ? INT_MIN : SvIV(year);
+        tm.tm_wday = wday == &PL_sv_undef ? INT_MIN : SvIV(wday);
+        tm.tm_yday = yday == &PL_sv_undef ? INT_MIN : SvIV(yday);
+        tm.tm_isdst = isdst == &PL_sv_undef ? INT_MIN : SvIV(isdst);
+
+        remainder = strptime(s, format, &tm);
+
+        if (remainder == NULL) {
+            if (GIMME != G_ARRAY)
+                XSRETURN_UNDEF;
+        }
+        else if (GIMME != G_ARRAY)
+                PUSHs(sv_2mortal(newSViv(remainder - s)));
+        else {
+            EXTEND(SP, 9);
+            PUSHs(tm.tm_sec == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_sec)));
+            PUSHs(tm.tm_min == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_min)));
+            PUSHs(tm.tm_hour == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_hour)));
+            PUSHs(tm.tm_mday == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_mday)));
+            PUSHs(tm.tm_mon == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_mon)));
+            PUSHs(tm.tm_year == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_year)));
+            PUSHs(tm.tm_wday == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_wday)));
+            PUSHs(tm.tm_yday == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_yday)));
+            PUSHs(tm.tm_isdst == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_isdst)));
         }
 
 int
@@ -1220,7 +1256,9 @@ BOOT:
     newCONSTSUB(stash, "TIMER_ABSTIME",       newSViv(TIMER_ABSTIME));
     newCONSTSUB(stash, "UTIME_NOW",           newSViv(UTIME_NOW));
     newCONSTSUB(stash, "UTIME_OMIT",          newSViv(UTIME_OMIT));
+#ifdef RUN_LVL
     newCONSTSUB(stash, "RUN_LVL",             newSViv(RUN_LVL));
+#endif
     newCONSTSUB(stash, "BOOT_TIME",           newSViv(BOOT_TIME));
     newCONSTSUB(stash, "NEW_TIME",            newSViv(NEW_TIME));
     newCONSTSUB(stash, "OLD_TIME",            newSViv(OLD_TIME));

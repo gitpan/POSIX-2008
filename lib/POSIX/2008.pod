@@ -864,6 +864,26 @@ srandom(seed);
 (dev, ino, mode, nlink, uid, gid, rdev, size, atim_sec, mtim_sec, ctim_sec,
 blksize, blocks, atim_nsec, mtim_nsec, ctim_nsec) = stat(path);
 
+=item strptime
+
+(sec, min, hour, mday, mon, year, wday, yday, isdst) = strptime(s, format[,
+sec, min, hour, mday, mon, year, wday, yday, isdst]);
+
+strptime() converts the string I<s> into a broken-down time according to the
+format string I<format>. The time fields may optionally be initialized in
+whole or in part and will be returned as initialized if they are not affected
+by the format string. Unprocessed uninitialized or undef fields are returned
+as undef.
+
+Returns an empty list on error.
+
+In scalar context returns the index of the first byte in I<s> that was not
+processed or the byte length of I<s> if the whole string was consumed or undef
+on error.
+
+As strptime() acts on null-terminated strings, strings containing NUL bytes
+will only be processed up to the first NUL byte.
+
 =item symlink
 
 symlink(old, new);

@@ -1,5 +1,7 @@
 Revision history for POSIX::2008.
 
+0.02  2013-09-14
+	- added strptime()
 0.01  2013-09-13
 	- initial version
 
