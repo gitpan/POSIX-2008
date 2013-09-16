@@ -164,24 +164,22 @@ clock_getres(clockid_t clock_id = CLOCK_REALTIME);
             ret = clock_gettime(clock_id, &res);
         if (ret == 0) {
             EXTEND(SP, 2);
-            PUSHs(sv_2mortal(newSViv(res.tv_sec)));
-            PUSHs(sv_2mortal(newSViv(res.tv_nsec)));
+            mPUSHi(res.tv_sec);
+            mPUSHi(res.tv_nsec);
         }
 
-#define RETURN_NANOSLEEP_REMAIN(ret) {                          \
-    if (ret == 0 || errno == EINTR) {                           \
-        if (GIMME_V != G_ARRAY) {                               \
-            PUSHs(sv_2mortal(newSVnv(remain.tv_sec +            \
-                                     remain.tv_nsec/(NV)1e9))); \
-        }                                                       \
-        else {                                                  \
-            EXTEND(SP, 2);                                      \
-            PUSHs(sv_2mortal(newSViv(remain.tv_sec)));          \
-            PUSHs(sv_2mortal(newSViv(remain.tv_nsec)));         \
-        }                                                       \
-    }                                                           \
-    else if (GIMME_V != G_ARRAY)                                \
-        XSRETURN_UNDEF;                                         \
+#define RETURN_NANOSLEEP_REMAIN(ret) {                      \
+    if (ret == 0 || errno == EINTR) {                       \
+        if (GIMME_V != G_ARRAY)                             \
+            mPUSHn(remain.tv_sec + remain.tv_nsec/(NV)1e9); \
+        else {                                              \
+            EXTEND(SP, 2);                                  \
+            mPUSHi(remain.tv_sec);                          \
+            mPUSHi(remain.tv_nsec);                         \
+        }                                                   \
+    }                                                       \
+    else if (GIMME_V != G_ARRAY)                            \
+        XSRETURN_UNDEF;                                     \
 }
 
 void
@@ -276,15 +274,15 @@ getdate(char *string);
     PPCODE:
         if (tm != NULL) {
             EXTEND(SP, 9);
-            PUSHs(sv_2mortal(newSViv(tm->tm_sec)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_min)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_hour)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_mday)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_mon)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_year)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_wday)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_yday)));
-            PUSHs(sv_2mortal(newSViv(tm->tm_isdst)));
+            mPUSHi(tm->tm_sec);
+            mPUSHi(tm->tm_min);
+            mPUSHi(tm->tm_hour);
+            mPUSHi(tm->tm_mday);
+            mPUSHi(tm->tm_mon);
+            mPUSHi(tm->tm_year);
+            mPUSHi(tm->tm_wday);
+            mPUSHi(tm->tm_yday);
+            mPUSHi(tm->tm_isdst);
         }
 
 void
@@ -310,7 +308,7 @@ strptime(char *s, char *format, SV *sec = &PL_sv_undef, SV *min = &PL_sv_undef, 
                 XSRETURN_UNDEF;
         }
         else if (GIMME != G_ARRAY)
-                PUSHs(sv_2mortal(newSViv(remainder - s)));
+                mPUSHi(remainder - s);
         else {
             EXTEND(SP, 9);
             PUSHs(tm.tm_sec == INT_MIN ? &PL_sv_undef : sv_2mortal(newSViv(tm.tm_sec)));
@@ -353,10 +351,10 @@ getitimer(int which);
     PPCODE:
         if (getitimer(which, &value) == 0) {
             EXTEND(SP, 4);
-            PUSHs(sv_2mortal(newSViv(value.it_interval.tv_sec)));
-            PUSHs(sv_2mortal(newSViv(value.it_interval.tv_usec)));
-            PUSHs(sv_2mortal(newSViv(value.it_value.tv_sec)));
-            PUSHs(sv_2mortal(newSViv(value.it_value.tv_usec)));
+            mPUSHi(value.it_interval.tv_sec);
+            mPUSHi(value.it_interval.tv_usec);
+            mPUSHi(value.it_value.tv_sec);
+            mPUSHi(value.it_value.tv_usec);
         }
 
 void
@@ -367,10 +365,10 @@ setitimer(int which, time_t int_sec, int int_usec, time_t val_sec, int val_usec)
     PPCODE:
         if (setitimer(which, &value, &ovalue) == 0) {
             EXTEND(SP, 4);
-            PUSHs(sv_2mortal(newSViv(ovalue.it_interval.tv_sec)));
-            PUSHs(sv_2mortal(newSViv(ovalue.it_interval.tv_usec)));
-            PUSHs(sv_2mortal(newSViv(ovalue.it_value.tv_sec)));
-            PUSHs(sv_2mortal(newSViv(ovalue.it_value.tv_usec)));
+            mPUSHi(ovalue.it_interval.tv_sec);
+            mPUSHi(ovalue.it_interval.tv_usec);
+            mPUSHi(ovalue.it_value.tv_sec);
+            mPUSHi(ovalue.it_value.tv_usec);
         }
 
 int
@@ -399,10 +397,10 @@ getsid(pid_t pid = 0);
         PUSHs(sv_2mortal(newSVpv(utxent->ut_user, 0)));     \
         PUSHs(sv_2mortal(newSVpv(utxent->ut_id, 0)));       \
         PUSHs(sv_2mortal(newSVpv(utxent->ut_line, 0)));     \
-        PUSHs(sv_2mortal(newSViv(utxent->ut_pid)));         \
-        PUSHs(sv_2mortal(newSViv(utxent->ut_type)));        \
-        PUSHs(sv_2mortal(newSViv(utxent->ut_tv.tv_sec)));   \
-        PUSHs(sv_2mortal(newSViv(utxent->ut_tv.tv_usec)));  \
+        mPUSHi(utxent->ut_pid);                             \
+        mPUSHi(utxent->ut_type);                            \
+        mPUSHi(utxent->ut_tv.tv_sec);                       \
+        mPUSHi(utxent->ut_tv.tv_usec);                      \
     }                                                       \
 }
 
@@ -454,10 +452,10 @@ erand48(unsigned short X0, unsigned short X1, unsigned short X2);
         double result = erand48(xsubi);
     PPCODE:
         EXTEND(SP, 4);
-        PUSHs(sv_2mortal(newSVnv(result)));
-        PUSHs(sv_2mortal(newSVuv(xsubi[0])));
-        PUSHs(sv_2mortal(newSVuv(xsubi[1])));
-        PUSHs(sv_2mortal(newSVuv(xsubi[2])));
+        mPUSHn(result);
+        mPUSHu(xsubi[0]);
+        mPUSHu(xsubi[1]);
+        mPUSHu(xsubi[2]);
 
 void
 jrand48(unsigned short X0, unsigned short X1, unsigned short X2);
@@ -468,10 +466,10 @@ jrand48(unsigned short X0, unsigned short X1, unsigned short X2);
         long result = ix == 0 ? jrand48(xsubi) : nrand48(xsubi);
     PPCODE:
         EXTEND(SP, 4);
-        PUSHs(sv_2mortal(newSViv(result)));
-        PUSHs(sv_2mortal(newSVuv(xsubi[0])));
-        PUSHs(sv_2mortal(newSVuv(xsubi[1])));
-        PUSHs(sv_2mortal(newSVuv(xsubi[2])));
+        mPUSHi(result);
+        mPUSHu(xsubi[0]);
+        mPUSHu(xsubi[1]);
+        mPUSHu(xsubi[2]);
 
 long
 lrand48();
@@ -487,9 +485,9 @@ seed48(unsigned short seed1, unsigned short seed2, unsigned short seed3);
     PPCODE:
         old = seed48(seed16v);
         EXTEND(SP, 3);
-        PUSHs(sv_2mortal(newSVuv(old[0])));
-        PUSHs(sv_2mortal(newSVuv(old[1])));
-        PUSHs(sv_2mortal(newSVuv(old[2])));
+        mPUSHu(old[0]);
+        mPUSHu(old[1]);
+        mPUSHu(old[2]);
 
 void
 srand48(long seedval);
@@ -583,27 +581,27 @@ fdatasync(int fd);
 
 #define RETURN_STAT_BUF(buf) { \
     EXTEND(SP, 16);                                     \
-    PUSHs(sv_2mortal(newSVuv( buf.st_dev )));           \
-    PUSHs(sv_2mortal(newSVuv( buf.st_ino )));           \
-    PUSHs(sv_2mortal(newSVuv( buf.st_mode )));          \
-    PUSHs(sv_2mortal(newSVuv( buf.st_nlink )));         \
-    PUSHs(sv_2mortal(newSVuv( buf.st_uid )));           \
-    PUSHs(sv_2mortal(newSVuv( buf.st_gid )));           \
-    PUSHs(sv_2mortal(newSVuv( buf.st_rdev )));          \
+    mPUSHu( buf.st_dev );           \
+    mPUSHu( buf.st_ino );           \
+    mPUSHu( buf.st_mode );          \
+    mPUSHu( buf.st_nlink );         \
+    mPUSHu( buf.st_uid );           \
+    mPUSHu( buf.st_gid );           \
+    mPUSHu( buf.st_rdev );          \
     if (sizeof(IV) < 8)                                 \
-        PUSHs(sv_2mortal(newSVnv( buf.st_size )));      \
+        mPUSHn( buf.st_size );      \
     else                                                \
-        PUSHs(sv_2mortal(newSViv( buf.st_size )));      \
-    PUSHs(sv_2mortal(newSViv( buf.st_atim.tv_sec )));   \
-    PUSHs(sv_2mortal(newSViv( buf.st_mtim.tv_sec )));   \
-    PUSHs(sv_2mortal(newSViv( buf.st_ctim.tv_sec )));   \
+        mPUSHi( buf.st_size );      \
+    mPUSHi( buf.st_atim.tv_sec );   \
+    mPUSHi( buf.st_mtim.tv_sec );   \
+    mPUSHi( buf.st_ctim.tv_sec );   \
     /* actually these come before the times but we follow core stat */ \
-    PUSHs(sv_2mortal(newSViv( buf.st_blksize )));       \
-    PUSHs(sv_2mortal(newSViv( buf.st_blocks )));        \
+    mPUSHi( buf.st_blksize );       \
+    mPUSHi( buf.st_blocks );        \
     /* to stay compatible with pre-2008 stat we append the nanoseconds */ \
-    PUSHs(sv_2mortal(newSViv( buf.st_atim.tv_nsec )));  \
-    PUSHs(sv_2mortal(newSViv( buf.st_mtim.tv_nsec )));  \
-    PUSHs(sv_2mortal(newSViv( buf.st_ctim.tv_nsec )));  \
+    mPUSHi( buf.st_atim.tv_nsec );  \
+    mPUSHi( buf.st_mtim.tv_nsec );  \
+    mPUSHi( buf.st_ctim.tv_nsec );  \
 }
 
 void
@@ -668,7 +666,7 @@ mkstemp(char *template);
             fd = mkstemp(template);
             if (fd >= 0) {
                 EXTEND(SP, 2);
-                PUSHs(sv_2mortal(newSViv(fd)));
+                mPUSHi(fd);
                 PUSHs(sv_2mortal(newSVpv(template, 0)));
             }
         }
@@ -687,10 +685,15 @@ openat(int fd, char *path, int oflag = O_RDONLY, mode_t mode = 0666);
 
 ssize_t
 read(int fd, SV *buf, size_t count);
+    INIT:
+        char *cbuf;
     CODE:
         if(!SvPOK(buf))
             sv_setpvn(buf, "", 0);
-        RETVAL = read(fd, SvGROW(buf, count), count);
+        cbuf = SvGROW(buf, count);
+        if (cbuf == NULL)
+            XSRETURN_UNDEF;
+        RETVAL = read(fd, cbuf, count);
         if (RETVAL >= 0) {
             SvCUR_set(buf, RETVAL);
             SvPOK_only(buf);
@@ -725,6 +728,8 @@ pread(int fd, SV *buf, off_t file_offset, size_t nbytes, off_t buf_offset = 0);
         if (buf_offset + nbytes > buf_len) {
             new_buf_len = buf_offset + nbytes;
             cbuf = SvGROW(buf, new_buf_len);
+            if (cbuf == NULL)
+                XSRETURN_UNDEF;
         }
         /* must we pad the buffer with zeros? */
         if (buf_offset >= buf_len)
@@ -892,8 +897,8 @@ div(int numer, int denom);
     PPCODE:
         result = div(numer, denom);
         EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSViv(result.quot)));
-        PUSHs(sv_2mortal(newSViv(result.rem)));
+        mPUSHi(result.quot);
+        mPUSHi(result.rem);
 
 void
 ldiv(long numer, long denom);
@@ -902,8 +907,8 @@ ldiv(long numer, long denom);
     PPCODE:
         result = ldiv(numer, denom);
         EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSViv(result.quot)));
-        PUSHs(sv_2mortal(newSViv(result.rem)));
+        mPUSHi(result.quot);
+        mPUSHi(result.rem);
 
 double
 erf(double x);
@@ -1060,9 +1065,8 @@ cpow(double re_x, double im_x, double re_y, double im_y);
         double complex result = cpow(x, y);
     PPCODE:
         EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSVnv(creal(result))));
-        PUSHs(sv_2mortal(newSVnv(cimag(result))));
-
+        mPUSHn(creal(result));
+        mPUSHn(cimag(result));
 
 void
 cacos(double re, double im);
@@ -1140,8 +1144,8 @@ cacos(double re, double im);
             result = ctanh(z);
         }
         EXTEND(SP, 2);
-        PUSHs(sv_2mortal(newSVnv(creal(result))));
-        PUSHs(sv_2mortal(newSVnv(cimag(result))));
+        mPUSHn(creal(result));
+        mPUSHn(cimag(result));
 
 BOOT:
 {
